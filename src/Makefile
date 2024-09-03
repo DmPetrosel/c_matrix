@@ -47,11 +47,14 @@ gcov_report: s21_matrix_tests_cov
 	-lcov --directory $(shell pwd) -c -o coverage.info 
 	mkdir -p html
 	genhtml -o html coverage.info
+	open html/index.html
 
 clang:
+	cp ../materials/linters/.clang-format .
 	find . \( -name '*.c' -o -name '*.h' \) -exec clang-format -i {} \;
 	
 clang_check:
+	cp ../materials/linters/.clang-format .
 	find . \( -name '*.c' -o -name '*.h' \) -exec clang-format -n {} \;
 
 valgrind:

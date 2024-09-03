@@ -7,7 +7,7 @@ int s21_is_valid(int rows, int columns) {
 }
 int s21_is_compatible(matrix_t *A, matrix_t *B) {
   int status = SUCCESS;
-  if (A->rows != B->rows && A->columns != B->columns) {
+  if (A->rows != B->rows || A->columns != B->columns) {
     status = FAILURE;
   }
   return status;

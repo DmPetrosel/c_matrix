@@ -40,9 +40,12 @@ int s21_create_matrix(int rows, int columns, matrix_t *result) {
   return status;
 }
 void s21_remove_matrix(matrix_t *A) {
-  if (A == NULL) return;
+  if (A == NULL || A->matrix == NULL) return;
   for (int i = 0; i < A->rows; i++) {
-    free(A->matrix[i]);
+    if (A->matrix[i] != NULL) {
+      free(A->matrix[i]);
+      A->matrix[i] = NULL;
+    }
   }
   free(A->matrix);
   A->rows = 0;
@@ -60,10 +63,6 @@ int s21_eq_matrix(matrix_t *A, matrix_t *B) {
         double num = s21_dabs((double)A->matrix[r][c] - B->matrix[r][c]);
         double ernum = 1e-6;
         if (num <= ernum && num >= 0) {
-          // printf("%.15f\n",  (double)A->matrix[r][c]);
-          // printf("%.15f\n",  (double)B->matrix[r][c]);
-          // printf("%.15f\n",  s21_dabs((double)A->matrix[r][c] -
-          // B->matrix[r][c])); printf("%.15f\n", (double)0.0000001);
           status = SUCCESS;
         } else {
           status = FAILURE;
@@ -80,7 +79,6 @@ int s21_sum_matrix(matrix_t *A, matrix_t *B, matrix_t *result) {
   int status = OK;
   if (!s21_is_compatible(A, B)) status = CALC_ERROR;
   if (status == OK) {
-    s21_remove_matrix(result);
     status = s21_create_matrix(A->rows, A->columns, result);
   }
   if (status == OK) {
@@ -99,7 +97,6 @@ int s21_sub_matrix(matrix_t *A, matrix_t *B, matrix_t *result) {
   int status = OK;
   if (!s21_is_compatible(A, B)) status = CALC_ERROR;
   if (status == OK) {
-    s21_remove_matrix(result);
     status = s21_create_matrix(A->rows, A->columns, result);
   }
   if (status == OK) {
@@ -116,7 +113,6 @@ int s21_mult_number(matrix_t *A, double number, matrix_t *result) {
       result == NULL) {
     return INCORRECT_MTRX;
   }
-  s21_remove_matrix(result);
   int status = s21_create_matrix(A->rows, A->columns, result);
   if (status == OK) {
     for (int r = 0; r < A->rows; r++) {
@@ -144,7 +140,6 @@ int s21_mult_matrix(matrix_t *A, matrix_t *B, matrix_t *result) {
       !s21_is_valid(B->rows, B->columns) || A->columns != B->rows)
     status = CALC_ERROR;
   if (status == OK) {
-    s21_remove_matrix(result);
     status = s21_create_matrix(A->rows, B->columns, result);
   }
   if (status == OK) {
@@ -171,7 +166,6 @@ int s21_transpose(matrix_t *A, matrix_t *result) {
             3 6
 
   */
-  s21_remove_matrix(result);
   int status = s21_create_matrix(A->columns, A->rows, result);
   if (status == OK) {
     for (int r = 0; r < A->rows; r++) {
@@ -190,11 +184,9 @@ int s21_calc_complements(matrix_t *A, matrix_t *result) {
   if (A->rows != A->columns) {
     return CALC_ERROR;
   }
-  s21_remove_matrix(result);
   s21_create_matrix(A->rows, A->columns, result);
   for (int r = 0; r < A->rows; r++) {
     for (int c = 0; c < A->columns; c++) {
-      // printf("%d\n", r*A->columns+c);
       result->matrix[r][c] =
           s21_minor_of_element(A, r, c) * (((r + c) % 2 == 0) ? 1 : -1);
     }
@@ -216,11 +208,9 @@ int s21_determinant(matrix_t *A, double *result) {
         A->matrix[0][0] * A->matrix[1][1] - A->matrix[0][1] * A->matrix[1][0];
   } else {
     matrix_t for_complement = {0};
-    s21_create_matrix(A->rows, A->columns, &for_complement);
     s21_calc_complements(A, &for_complement);
     for (int i = 0; i < A->columns; i++) {
       *result += A->matrix[0][i] * for_complement.matrix[0][i];
-      // printf("%lf\n", for_complement.matrix[0][i]);
     }
     s21_remove_matrix(&for_complement);
   }
@@ -237,8 +227,6 @@ int s21_inverse_matrix(matrix_t *A, matrix_t *result) {
   double determinant = 0;
   s21_determinant(A, &determinant);
   if (s21_dabs(determinant) > __DBL_EPSILON__) {
-    s21_remove_matrix(result);
-    s21_create_matrix(A->rows, A->columns, result);
     matrix_t temp_compl = {0};
     s21_calc_complements(A, &temp_compl);
     matrix_t temp_transp = {0};
